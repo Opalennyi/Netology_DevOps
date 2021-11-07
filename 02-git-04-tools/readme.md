@@ -33,13 +33,25 @@ dd01a3507 Update CHANGELOG.md
 
 [ 5. Найдите коммит в котором была создана функция func providerSource, ее определение в коде выглядит так func providerSource(...) (вместо троеточего перечислены аргументы). ]
 
-Это коммит 5af1e6234.
+Это коммит 8c928e835.
 
-Как сделано:
-'''bash
-git log -S'func providerSource' --oneline
-'''
-получаем два коммита:
-5af1e6234 main: Honor explicit provider_installation CLI config when present
+Как сделано: git log -S'func providerSource(' --oneline, получаем коммит:
 8c928e835 main: Consult local directories as potential mirrors of providers
-Через git show смотрим оба коммита.
+
+[ 6. Найдите все коммиты в которых была изменена функция globalPluginDirs. ]
+78b122055 Remove config.go and update things using its aliases
+52dbf9483 keep .terraform.d/plugins for discovery
+41ab0aef7 Add missing OS_ARCH dir to global plugin paths
+66ebff90c move some more plugin search path logic to command
+8364383c3 Push plugin discovery down into command package
+
+Как сделано: git grep 'func globalPluginDirs'
+Получаем вывод: plugins.go:func globalPluginDirs() []string {
+Затем: git log --no-patch --oneline -L:globalPluginDirs:plugins.go
+
+[ 7. Кто автор функции synchronizedWriters? ]
+
+Martin Atkins <mart@degeneration.co.uk>
+
+Как сделано: git log -S'func synchronizedWriters(' --pretty=medium
+Находим всего два коммита, более ранний из них — коммит Мартина Аткинса. К тому же, у более позднего коммита комментарий "remove unused", то есть скорее всего там функция была уже удалена, поскольку вывод git grep 'synchronizedWriters' пустой.
