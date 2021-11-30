@@ -38,7 +38,7 @@ After=network-online.target
 [Service]
 EnvironmentFile=/etc/default/node_exporter
 Type=simple
-ExecStart=/home/vagrant/node_exporter-1.3.0.linux-amd64/node_exporter
+ExecStart=/home/vagrant/node_exporter-1.3.0.linux-amd64/node_exporter $MYOPTIONS
 
 [Install]
 WantedBy=multi-user.target
@@ -141,6 +141,7 @@ vagrant     1076  0.0  0.2  10760  2468 pts/0    S+   00:12   0:00 grep --color=
 * `node_disk_read_time_seconds_total` — количество секунд, затраченных на чтение.
 * `node_disk_read_bytes_total` — количество прочитанных байт.
 * `node_disk_write_time_seconds_total` — количество секунд, затраченных на запись.
+ * `node_disk_write_bytes_total` — количество прочитанных байт.
 * `node_disk_io_now` — количество операций ввода-вывода (I/O), выполняемых в настоящий момент.
 
 **Network:**
