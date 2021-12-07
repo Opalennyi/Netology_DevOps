@@ -1,9 +1,126 @@
 #### 2. Могут ли файлы, являющиеся жесткой ссылкой на один объект, иметь разные права доступа и владельца? Почему?
 
-Да, могут, потому что один файл может иметь несколько жестких ссылок, и в таком случае, цитируя Википедию:
->"он будет фигурировать на диске одновременно в различных каталогах или под различными именами в одном каталоге".
+_/ UPD submitted on Dec. 8th /_
 
-Если по какой-то причине нам нужно, чтобы из различных каталогов доступ был по-разному разграничен или при обращении по разным именам (этот кейс разбирали на лекции) у файла были разные права доступа, это возможно реализовать.
+Нет, это невозможно, поскольку несколько жестких ссылок ведут на один и тот же файл, права доступа будут у всех одинаковыми. Например, [сайт Helge Klein](https://helgeklein.com/blog/hard-links-and-permissions-acls/) прямо отвечает на этот вопрос:
+> **Can permissions on multiple hard links to the same data be different?**
+>
+> No. Permissions on all hard links to the same data on disk are always identical. The same applies to attributes. That means if you change the permissions/owner/attributes on one hard link, you will immediately see the changes on all other hard links.
+
+Проверим это на практике.
+
+````bash
+vagrant@vagrant:~$ touch some_file
+vagrant@vagrant:~$ ls
+some_file
+vagrant@vagrant:~$ ln some_file HL1_some_file
+vagrant@vagrant:~$ ln some_file HL2_some_file
+vagrant@vagrant:~$ ln some_file HL3_some_file
+vagrant@vagrant:~$ ls -l
+total 0
+-rw-rw-r-- 4 vagrant vagrant 0 Dec  7 22:23 HL1_some_file
+-rw-rw-r-- 4 vagrant vagrant 0 Dec  7 22:23 HL2_some_file
+-rw-rw-r-- 4 vagrant vagrant 0 Dec  7 22:23 HL3_some_file
+-rw-rw-r-- 4 vagrant vagrant 0 Dec  7 22:23 some_file
+
+vagrant@vagrant:~$ stat some_file
+  File: some_file
+  Size: 0         	Blocks: 0          IO Block: 4096   regular empty file
+Device: fd00h/64768d	Inode: 131089      Links: 4
+Access: (0664/-rw-rw-r--)  Uid: ( 1000/ vagrant)   Gid: ( 1000/ vagrant)
+Access: 2021-12-07 22:23:38.859769985 +0000
+Modify: 2021-12-07 22:23:38.859769985 +0000
+Change: 2021-12-07 22:24:20.172415368 +0000
+ Birth: -
+vagrant@vagrant:~$ stat HL1_some_file
+  File: HL1_some_file
+  Size: 0         	Blocks: 0          IO Block: 4096   regular empty file
+Device: fd00h/64768d	Inode: 131089      Links: 4
+Access: (0664/-rw-rw-r--)  Uid: ( 1000/ vagrant)   Gid: ( 1000/ vagrant)
+Access: 2021-12-07 22:23:38.859769985 +0000
+Modify: 2021-12-07 22:23:38.859769985 +0000
+Change: 2021-12-07 22:24:20.172415368 +0000
+ Birth: -
+vagrant@vagrant:~$ stat HL2_some_file
+  File: HL2_some_file
+  Size: 0         	Blocks: 0          IO Block: 4096   regular empty file
+Device: fd00h/64768d	Inode: 131089      Links: 4
+Access: (0664/-rw-rw-r--)  Uid: ( 1000/ vagrant)   Gid: ( 1000/ vagrant)
+Access: 2021-12-07 22:23:38.859769985 +0000
+Modify: 2021-12-07 22:23:38.859769985 +0000
+Change: 2021-12-07 22:24:20.172415368 +0000
+ Birth: -
+vagrant@vagrant:~$ stat HL3_some_file
+  File: HL3_some_file
+  Size: 0         	Blocks: 0          IO Block: 4096   regular empty file
+Device: fd00h/64768d	Inode: 131089      Links: 4
+Access: (0664/-rw-rw-r--)  Uid: ( 1000/ vagrant)   Gid: ( 1000/ vagrant)
+Access: 2021-12-07 22:23:38.859769985 +0000
+Modify: 2021-12-07 22:23:38.859769985 +0000
+Change: 2021-12-07 22:24:20.172415368 +0000
+ Birth: -
+````
+
+Последним выводом проверили, что исходный файл и все три жесткие ссылки ведут на один файл, у всех `inode = 131089`, у всех одинаковые права.
+
+Для чистоты проверки разнесем хардлинки по разным директориям.
+
+````bash
+vagrant@vagrant:~$ mkdir Dir_HL1
+vagrant@vagrant:~$ mkdir Dir_HL2
+vagrant@vagrant:~$ mv HL1_some_file Dir_HL1
+vagrant@vagrant:~$ mv HL2_some_file Dir_HL2
+vagrant@vagrant:~$ ls -l
+total 8
+drwxrwxr-x 2 vagrant vagrant 4096 Dec  7 22:27 Dir_HL1
+drwxrwxr-x 2 vagrant vagrant 4096 Dec  7 22:27 Dir_HL2
+-rw-rw-r-- 4 vagrant vagrant    0 Dec  7 22:23 HL3_some_file
+-rw-rw-r-- 4 vagrant vagrant    0 Dec  7 22:23 some_file
+````
+
+Попробуем изменить права для исходного файла и проверим, что произошло с хардлинками:
+````bash
+vagrant@vagrant:~$ ls -l
+total 8
+drwxrwxr-x 2 vagrant vagrant 4096 Dec  7 22:27 Dir_HL1
+drwxrwxr-x 2 vagrant vagrant 4096 Dec  7 22:27 Dir_HL2
+-rwxrw-r-- 4 vagrant vagrant    0 Dec  7 22:23 HL3_some_file
+-rwxrw-r-- 4 vagrant vagrant    0 Dec  7 22:23 some_file
+vagrant@vagrant:~$ cd Dir_HL1 && ls -l
+total 0
+-rwxrw-r-- 4 vagrant vagrant 0 Dec  7 22:23 HL1_some_file
+vagrant@vagrant:~/Dir_HL1$ cd ../Dir_HL2 && ls -l
+total 0
+-rwxrw-r-- 4 vagrant vagrant 0 Dec  7 22:23 HL2_some_file
+````
+
+Как мы видим, право `x` добавилось и исходному файлу, и всем хардлинкам. Попробуем изменить права у хардлинка, лежащего в другой директории.
+````bash
+vagrant@vagrant:~/Dir_HL2$ chmod u-x HL2_some_file
+vagrant@vagrant:~/Dir_HL2$ ls -l
+total 0
+-rw-rw-r-- 4 vagrant vagrant 0 Dec  7 22:23 HL2_some_file
+vagrant@vagrant:~/Dir_HL2$ cd ../ && ls -l
+total 8
+drwxrwxr-x 2 vagrant vagrant 4096 Dec  7 22:27 Dir_HL1
+drwxrwxr-x 2 vagrant vagrant 4096 Dec  7 22:27 Dir_HL2
+-rw-rw-r-- 4 vagrant vagrant    0 Dec  7 22:23 HL3_some_file
+-rw-rw-r-- 4 vagrant vagrant    0 Dec  7 22:23 some_file
+vagrant@vagrant:~$ cd Dir_HL1 && ls -l
+total 0
+-rw-rw-r-- 4 vagrant vagrant 0 Dec  7 22:23 HL1_some_file
+````
+
+Право исполнения исчезло так же у исходного файла и у всех трех хардлинков.
+
+_____
+
+> _/v. 1, submitted on Dec. 3rd/_
+>
+> Да, могут, потому что один файл может иметь несколько жестких ссылок, и в таком случае, цитируя Википедию:
+>>"он будет фигурировать на диске одновременно в различных каталогах или под различными именами в одном каталоге".
+>
+> Если по какой-то причине нам нужно, чтобы из различных каталогов доступ был по-разному разграничен или при обращении по разным именам (этот кейс разбирали на лекции) у файла были разные права доступа, это возможно реализовать.
 
 #### 3. Сделайте `vagrant destroy` на имеющийся инстанс Ubuntu. Замените содержимое Vagrantfile следующим: <...>
 
