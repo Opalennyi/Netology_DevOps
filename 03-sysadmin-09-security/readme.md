@@ -254,33 +254,62 @@ to update, run `./bitwarden.sh updateself` and then `./bitwarden.sh update`
 
 #### 3. Установите apache2, сгенерируйте самоподписанный сертификат, настройте тестовый сайт для работы по HTTPS.
 
-# [ ЭТО НЕ ПАШЕТ, НАДО ПЕРЕДЕЛАТЬ ]
+Воспользуемся [инструкцией](https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-apache-in-ubuntu-20-04).
 
-````bash
-not-vagrant@not-vagrant:~$ sudo apt-get update && sudo apt-get upgrade
-not-vagrant@not-vagrant:~$ sudo apt install apache2
-not-vagrant@not-vagrant:~$ sudo ufw allow "Apache Full"
-Rules updated
-Rules updated (v6)
-///
+```bash
+vagrant@vagrant:~$ sudo apt-get update && sudo apt-get upgrade
+<...>
+Use 'sudo apt autoremove' to remove them.
+0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+vagrant@vagrant:~$ sudo apt install apache2
+Reading package lists... Done
+Building dependency tree... 50%
+Building dependency tree
+Reading state information... Done
+Suggested packages:
+  apache2-doc apache2-suexec-pristine | apache2-suexec-custom www-browser
+The following NEW packages will be installed:
+  apache2
+0 upgraded, 1 newly installed, 0 to remove and 0 not upgraded.
+Need to get 95.5 kB of archives.
+After this operation, 543 kB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 apache2 amd64 2.4.41-4ubuntu3.8 [95.5 kB]
+Fetched 95.5 kB in 0s (347 kB/s)
+Selecting previously unselected package apache2.
+(Reading database ... 50455 files and directories currently installed.)
+Preparing to unpack .../apache2_2.4.41-4ubuntu3.8_amd64.deb ...
+Unpacking apache2 (2.4.41-4ubuntu3.8) ...
+Setting up apache2 (2.4.41-4ubuntu3.8) ...
+Processing triggers for systemd (245.4-4ubuntu3.13) ...
+Processing triggers for man-db (2.9.1-1) ...
+Processing triggers for ufw (0.36-6ubuntu1) ...
+Rules updated for profile 'Apache Full'
+Rules updated for profile 'Nginx HTTPS'
+Skipped reloading firewall
+vagrant@vagrant:~$ sudo ufw allow "Apache Full"
+Skipping adding existing rule
+Skipping adding existing rule (v6)
+```
 
+Активируем `mod_ssl`:
+```bash
 vagrant@vagrant:~$ sudo a2enmod ssl
 Considering dependency setenvif for ssl:
 Module setenvif already enabled
 Considering dependency mime for ssl:
 Module mime already enabled
 Considering dependency socache_shmcb for ssl:
-Enabling module socache_shmcb.
-Enabling module ssl.
-See /usr/share/doc/apache2/README.Debian.gz on how to configure SSL and create self-signed certificates.
-To activate the new configuration, you need to run:
-  systemctl restart apache2
-
+Module socache_shmcb already enabled
+Module ssl already enabled
 vagrant@vagrant:~$ sudo systemctl restart apache2
+```
+
+Создадим SSL-сертификат:
+```bash
 vagrant@vagrant:~$ sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/private/apache-selfsigned.key -out /etc/ssl/certs/apache-selfsigned.crt
 Generating a RSA private key
-........................+++++
-.+++++
+................+++++
+...........................+++++
 writing new private key to '/etc/ssl/private/apache-selfsigned.key'
 -----
 You are about to be asked to enter information that will be incorporated
@@ -291,37 +320,119 @@ For some fields there will be a default value,
 If you enter '.', the field will be left blank.
 -----
 Country Name (2 letter code) [AU]:RU
-State or Province Name (full name) [Some-State]:.
-Locality Name (eg, city) []:St. Petersburg
+State or Province Name (full name) [Some-State]:St. Petersburg
+Locality Name (eg, city) []:St. Petersburg City
 Organization Name (eg, company) [Internet Widgits Pty Ltd]:Netology
 Organizational Unit Name (eg, section) []:Students
-Common Name (e.g. server FQDN or YOUR name) []:localhost
+Common Name (e.g. server FQDN or YOUR name) []:192.168.56.3
 Email Address []:syarhei.belov@gmail.com
+```
 
-vagrant@vagrant:~$ sudo nano /etc/apache2/sites-available/localhost.conf
-vagrant@vagrant:~$ sudo cat /etc/apache2/sites-available/localhost.conf
+Сконфигирируем Apache, чтобы он использовал SSL:
+```bash
+vagrant@vagrant:~$ sudo nano /etc/apache2/sites-available/192.168.56.3.conf
+vagrant@vagrant:~$ sudo cat /etc/apache2/sites-available/192.168.56.3.conf
 <VirtualHost *:443>
-   ServerName localhost
-   DocumentRoot /var/www/localhost
+   ServerName 192.168.56.3
+   DocumentRoot /var/www/192.168.56.3
 
    SSLEngine on
    SSLCertificateFile /etc/ssl/certs/apache-selfsigned.crt
    SSLCertificateKeyFile /etc/ssl/private/apache-selfsigned.key
 </VirtualHost>
-
-vagrant@vagrant:~$ sudo mkdir /var/www/localhost
-vagrant@vagrant:~$ sudo nano /var/www/localhost/index.html
-vagrant@vagrant:~$ cat /var/www/localhost/index.html
-<h1>it worked!</h1>
-
-vagrant@vagrant:~$ sudo a2ensite localhost.conf
-Enabling site localhost.
+vagrant@vagrant:~$ sudo mkdir /var/www/192.168.56.3
+vagrant@vagrant:~$ sudo nano /var/www/192.168.56.3/index.html
+vagrant@vagrant:~$ sudo cat /var/www/192.168.56.3/index.html
+<h1>Apache, it worked!</h1>
+vagrant@vagrant:~$ sudo a2ensite 192.168.56.3.conf
+Enabling site 192.168.56.3.
 To activate the new configuration, you need to run:
   systemctl reload apache2
 vagrant@vagrant:~$ sudo apache2ctl configtest
 Syntax OK
 vagrant@vagrant:~$ sudo systemctl reload apache2
-````
+```
+
+Проверим работу сервера по HTTP:
+
+![security11](images/security11.png)
+
+Это ожидаемый результат, поскольку у нас нет цепочки сертификатов, а самоподписанный сертификат сгенерирован только для конечного узла и не добавлен в доверенные.
+
+Добавим этот сертификат в доверенные (в моем случае, нажатием на 'visit this website' и вводом пароля), сайт откроется:
+
+![security12](images/security12.png)
+
+![security13](images/security13.png)
+
+Добавим перенаправление с HTTP на HTTPS:
+```bash
+vagrant@vagrant:~$ sudo nano /etc/apache2/sites-available/000-default.conf
+vagrant@vagrant:~$ sudo cat /etc/apache2/sites-available/000-default.conf
+<VirtualHost *:80>
+	# The ServerName directive sets the request scheme, hostname and port that
+	# the server uses to identify itself. This is used when creating
+	# redirection URLs. In the context of virtual hosts, the ServerName
+	# specifies what hostname must appear in the request's Host: header to
+	# match this virtual host. For the default virtual host (this file) this
+	# value is not decisive as it is used as a last resort host regardless.
+	# However, you must set it for any further virtual host explicitly.
+	#ServerName www.example.com
+
+	ServerAdmin webmaster@localhost
+	DocumentRoot /var/www/html
+
+	# Available loglevels: trace8, ..., trace1, debug, info, notice, warn,
+	# error, crit, alert, emerg.
+	# It is also possible to configure the loglevel for particular
+	# modules, e.g.
+	#LogLevel info ssl:warn
+
+	ErrorLog ${APACHE_LOG_DIR}/error.log
+	CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+	# For most configuration files from conf-available/, which are
+	# enabled or disabled at a global level, it is possible to
+	# include a line for only one particular virtual host. For example the
+	# following line enables the CGI configuration for this host only
+	# after it has been globally disabled with "a2disconf".
+	#Include conf-available/serve-cgi-bin.conf
+
+	Redirect "/" "https://192.168.56.3/"
+
+</VirtualHost>
+
+# vim: syntax=apache ts=4 sw=4 sts=4 sr noet
+```
+
+Активируем изменения в Apache:
+```bash
+vagrant@vagrant:~$ sudo a2enmod ssl
+Considering dependency setenvif for ssl:
+Module setenvif already enabled
+Considering dependency mime for ssl:
+Module mime already enabled
+Considering dependency socache_shmcb for ssl:
+Module socache_shmcb already enabled
+Module ssl already enabled
+vagrant@vagrant:~$ sudo a2enmod headers
+Module headers already enabled
+vagrant@vagrant:~$ sudo a2ensite default-ssl
+Site default-ssl already enabled
+vagrant@vagrant:~$ sudo a2enconf ssl-params
+Conf ssl-params already enabled
+vagrant@vagrant:~$ sudo apache2ctl configtest
+Syntax OK
+vagrant@vagrant:~$ sudo systemctl restart apache2
+```
+
+HTTP успешно перенаправляется на HTTPS.
+
+![security14](images/security14.png)
+
+![security15](images/security15.png)
+
+![security16](images/security16.png)
 
 #### 4. Проверьте на TLS уязвимости произвольный сайт в интернете (кроме сайтов МВД, ФСБ, МинОбр, НацБанк, РосКосмос, РосАтом, РосНАНО и любых госкомпаний, объектов КИИ, ВПК ... и тому подобное).
 
