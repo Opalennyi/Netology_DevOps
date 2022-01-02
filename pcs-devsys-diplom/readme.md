@@ -428,8 +428,8 @@ server {
                 try_files $uri $uri/ =404;
         }
 }
-vagrant@vagrant:~$ nano /var/www/netology-diplom1.com/html/index.html
-vagrant@vagrant:~$ sudo nano /etc/nginx/sites-available/netology-diplom1.com
+vagrant@vagrant:~$ nano /var/www/example.com/html/index.html
+vagrant@vagrant:~$ sudo nano /etc/nginx/sites-available/example.com
 vagrant@vagrant:~$ sudo ln -s /etc/nginx/sites-available/example.com /etc/nginx/sites-enabled/
 vagrant@vagrant:~$ sudo nginx -t
 nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
