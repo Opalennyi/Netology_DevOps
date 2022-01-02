@@ -493,7 +493,7 @@ Opalennyi-iMac-2:~ opalennyi$ cat /private/etc/hosts
 
 Поскольку в тексте задания не оговорена необходимость отзыва предыдущих сертификатов, в скрипте я не отзываю сертификаты по серийным номерам, но только чищу истекшие по сроку.
 
-Скрипт (файл `renew-certs.sh`)
+Скрипт (файл [renew-certs.sh](renew-certs.sh))
 ```bash
 vagrant@vagrant:~$ nano renew-certs.sh
 vagrant@vagrant:~$ chmod +x renew-certs.sh
