@@ -145,7 +145,7 @@ CREATE DATABASE
 
 Восстановите бэкап БД в `test_database`.
 
-```postgres
+```SQL
 root@9bc364bd2844:/# psql test_database < /var/lib/postgresql/test_dump.sql -U postgres
 SET
 SET
@@ -178,11 +178,11 @@ COPY 8
 ALTER TABLE
 ```
 
-П*ерейдите в управляющую консоль `psql` внутри контейнера.*
+_Перейдите в управляющую консоль `psql` внутри контейнера._
 
 _Подключитесь к восстановленной БД и проведите операцию ANALYZE для сбора статистики по таблице._
 
-```postgres
+```SQL
 test_database=# ANALYZE;
 ANALYZE
 ```
@@ -192,7 +192,7 @@ _Используя таблицу [pg_stats](https://postgrespro.ru/docs/postgr
 
 Самый простой способ, как мне видится, такой:
 
-```postgres
+```SQL
 test_database=# SELECT attname, MAX(avg_width) FROM pg_stats WHERE tablename='orders' GROUP BY attname;
  attname | max
 ---------+-----
@@ -251,7 +251,7 @@ CREATE TABLE orders_500andabove PARTITION OF orders
 
 _Используя утилиту `pg_dump` создайте бекап БД `test_database`._
 
-```postgresql
+```bash
 root@9bc364bd2844:/# pg_dump -U postgres test_database > /var/lib/postgresql/test_database.sql
 root@9bc364bd2844:/# ls /var/lib/postgresql/
 data  test_database.sql  test_dump.sql
@@ -265,7 +265,7 @@ _Как бы вы доработали бэкап-файл, чтобы доба�
 
 Добавил бы ограничение UNIQUE на столбец.
 
-```postgresql
+```SQL
 CREATE TABLE public.orders (
     id integer NOT NULL,
     title character varying(80) NOT NULL UNIQUE,
