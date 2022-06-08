@@ -1,7 +1,6 @@
 ## Задача 1
 
-_Используя docker поднимите инстанс PostgreSQL (версию 12) c 2 volume, 
-в который будут складываться данные БД и бэкапы._
+_Используя docker поднимите инстанс PostgreSQL (версию 12) c 2 volume, в который будут складываться данные БД и бэкапы._
 
 _Приведите получившуюся команду или docker-compose манифест._
 
@@ -24,7 +23,7 @@ a19e980f0a72: Pull complete
 Digest: sha256:505d023f030cdea84a42d580c2a4a0e17bbb3e91c30b2aea9c02f2dfb10325ba
 Status: Downloaded newer image for postgres:12
 docker.io/library/postgres:12
-Opalennyi-iMac-2:06-db-02-sql opalennyi$ docker run --rm --name 06-db-02-sql -p 5432:5432 -e POSTGRES_USER=test-admin-user -e POSTGRES_PASSWORD=mysecretpassword -d postgres:12
+Opalennyi-iMac-2:06-db-02-sql opalennyi$ docker run --rm --name 06-db-02-sql -p 5432:5432 -e POSTGRES_USER=test-admin-user -e POSTGRES_PASSWORD=mysecretpassword --volume=/Users/sergey.belov/PycharmProjects/Netology_DevOps/06-db-02-sql/postgresql-files:/var/lib/postgresql --volume=/Users/sergey.belov/PycharmProjects/Netology_DevOps/06-db-02-sql/postgresql-backups:/var/lib/postgresql/backups -d postgres:12
 43b34e6127edb8fc8d364010f751fb7aeb30221c11953a9da07fb99fabde205b
 Opalennyi-iMac-2:06-db-02-sql opalennyi$ docker ps
 CONTAINER ID   IMAGE         COMMAND                  CREATED         STATUS         PORTS                    NAMES
@@ -412,3 +411,128 @@ test_db=# EXPLAIN SELECT * from clients WHERE order_id IS NOT NULL ORDER BY id;
 Затем происходит простое последовательное сканирование (`Seq Scan`) по таблице `clients`.
 
 Сканирование происходит с условием, происходит фильтрация (`Filter`) по условию `order_id IS NOT NULL`.
+
+## Задача 6
+
+_Создайте бэкап БД test_db и поместите его в volume, предназначенный для бэкапов (см. Задачу 1)._
+
+```bash
+test_db-# \q
+sergey.belov@Try-Goose-Grass-MacBook-Pro ~ % sudo docker exec -it 06-db-02-sql bash
+root@17f62903c983:/# pg_dump -U test-admin-user test_db > /var/lib/postgresql/backups/test_db.sql
+root@17f62903c983:/# exit
+exit
+```
+
+Остановите контейнер с PostgreSQL (но не удаляйте volumes).
+
+```bash
+sergey.belov@Try-Goose-Grass-MacBook-Pro ~ % docker stop 06-db-02-sql
+06-db-02-sql
+```
+
+Поднимите новый пустой контейнер с PostgreSQL.
+
+```bash
+sergey.belov@Try-Goose-Grass-MacBook-Pro ~ % docker run --rm --name 06-db-02-sql-RESTORE -p 5432:5432 -e POSTGRES_USER=test-admin-user -e POSTGRES_PASSWORD=mysecretpassword --volume=/Users/sergey.belov/PycharmProjects/Netology_DevOps/06-db-02-sql/postgresql-backups:/var/lib/postgresql/backups -d postgres:12
+d4b7ba6395f5597a74b3d1b1f1ea79e08bc734a66586744a4135d9c4b893b8a6
+sergey.belov@Try-Goose-Grass-MacBook-Pro ~ % docker ps
+CONTAINER ID   IMAGE         COMMAND                  CREATED         STATUS         PORTS                    NAMES
+d4b7ba6395f5   postgres:12   "docker-entrypoint.s…"   3 seconds ago   Up 2 seconds   0.0.0.0:5432->5432/tcp   06-db-02-sql-RESTORE
+```
+
+Восстановите БД test_db в новом контейнере.
+
+```bash
+sergey.belov@Try-Goose-Grass-MacBook-Pro ~ % sudo docker exec -it 06-db-02-sql-RESTORE psql -U test-admin-user
+psql (12.11 (Debian 12.11-1.pgdg110+1))
+Type "help" for help.
+
+test-admin-user=# CREATE DATABASE test_db;
+CREATE DATABASE
+test-admin-user=# \q
+sergey.belov@Try-Goose-Grass-MacBook-Pro ~ % sudo docker exec -it 06-db-02-sql-RESTORE bash
+Password:
+root@d4b7ba6395f5:/# psql test_db < /var/lib/postgresql/backups/test_db.sql -U test-admin-user
+SET
+SET
+SET
+SET
+SET
+ set_config
+------------
+
+(1 row)
+
+SET
+SET
+SET
+SET
+CREATE SCHEMA
+ALTER SCHEMA
+SET
+SET
+CREATE TABLE
+ALTER TABLE
+CREATE SEQUENCE
+ALTER TABLE
+ALTER SEQUENCE
+CREATE TABLE
+ALTER TABLE
+CREATE SEQUENCE
+ALTER TABLE
+ALTER SEQUENCE
+ALTER TABLE
+ALTER TABLE
+COPY 5
+COPY 5
+ setval
+--------
+      5
+(1 row)
+
+ setval
+--------
+      5
+(1 row)
+
+ALTER TABLE
+CREATE INDEX
+ALTER TABLE
+ERROR:  role "test-simple-user" does not exist
+ERROR:  role "test-simple-user" does not exist
+```
+
+Проверим данные восстановленной БД:
+
+```SQL
+root@d4b7ba6395f5:/# exit
+exit
+sergey.belov@Try-Goose-Grass-MacBook-Pro ~ % sudo docker exec -it 06-db-02-sql-RESTORE psql -U test-admin-user
+psql (12.11 (Debian 12.11-1.pgdg110+1))
+Type "help" for help.
+
+test-admin-user=# \connect test_db;
+You are now connected to database "test_db" as user "test-admin-user".
+test_db=# SELECT * from test_db.orders;
+ id |  name   | price
+----+---------+-------
+  1 | Шоколад |    10
+  2 | Принтер |  3000
+  3 | Книга   |   500
+  4 | Монитор |  7000
+  5 | Гитара  |  4000
+(5 rows)
+
+test_db=# SELECT * from test_db.clients;
+ id |       surname        | country | order_id
+----+----------------------+---------+----------
+  4 | Ронни Джеймс Дио     | Russia  |
+  5 | Ritchie Blackmore    | Russia  |
+  1 | Иванов Иван Иванович | USA     |        3
+  2 | Петров Петр Петрович | Canada  |        4
+  3 | Иоганн Себастьян Бах | Japan   |        5
+(5 rows)
+```
+
+Приведите список операций, который вы применяли для бэкапа данных и восстановления.
