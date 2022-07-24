@@ -17,7 +17,7 @@ _В ответе приведите:_
 
 Для того чтобы собрать образ, используем [Dockerfile-манифест](docker/Dockerfile). В процессе формирования образа мы используем [файл с конфигурацией Elasticsearch](docker/elasticsearch.yml).
 
-Из-за того, что Docker работает на MacBook'е с чипом M1, пришлось воспользоваться командой `buildx` и в явном виде указать платформу сборку, иначе в дальнейшем контейнер не запускался. 
+Из-за того, что Docker работает на MacBook'е с чипом M1, пришлось воспользоваться командой `buildx` и в явном виде указать платформу сборки, иначе в дальнейшем контейнер не запускался. 
 
 ```bash
 sergey.belov@Try-Goose-Grass-MacBook-Pro docker % docker buildx build --platform linux/amd64 -t elasticsearch-m1 .
