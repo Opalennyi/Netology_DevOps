@@ -70,25 +70,6 @@ _6. Создайте, остановите и удалите ec2 инстанс 
 
 ![AWS_ec2_6](images/AWS_ec2_6.png)
 
-## Задача 1 (Вариант с Yandex.Cloud). Регистрация в ЯО и знакомство с основами (необязательно, но крайне желательно).
-
-_1. Подробная инструкция на русском языке содержится [здесь](https://cloud.yandex.ru/docs/solutions/infrastructure-management/terraform-quickstart)._
-
-_2. Обратите внимание на период бесплатного использования после регистрации аккаунта._
-
-_3. Используйте раздел "Подготовьте облако к работе" для регистрации аккаунта. Далее раздел "Настройте провайдер" для подготовки
-базового терраформ конфига._
-
-```zsh
-sergey.belov@Try-Goose-Grass-MacBook-Pro ~ % which terraform
-/opt/homebrew/bin/terraform
-sergey.belov@Try-Goose-Grass-MacBook-Pro ~ % export PATH=$PATH:/opt/homebrew/bin/terraform
-```
-
-_4. Воспользуйтесь [инструкцией](https://registry.terraform.io/providers/yandex-cloud/yandex/latest/docs) на сайте терраформа, что бы 
-не указывать авторизационный токен в коде, а терраформ провайдер брал его из переменных окружений._
-
-
 ## Задача 2. Создание aws ec2 или yandex_compute_instance через терраформ. 
 
 _1. В каталоге `terraform` вашего основного репозитория, который был создан в начале курсе, создайте файл `main.tf` и `versions.tf`._
