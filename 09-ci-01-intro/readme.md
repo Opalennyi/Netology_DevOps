@@ -48,4 +48,4 @@ _Перейти в scrum, запланировать новый спринт, с
 
 _Если всё отработало в рамках ожидания - выгрузить схемы workflow для импорта в XML. Файлы с workflow приложить к решению задания._
 
-Workflow schemes находятся [вот здесь](/worklow_schemes/).
+Workflow schemes находятся [вот здесь](/09-ci-01-intro/worklow_schemes/).
