@@ -147,8 +147,8 @@
       command: snap install --classic certbot
 
 # When you're out of requests, we can issue one certificate for all of them
-    - name: Requesting SSL certificates
-      command: certbot -d www.sergey-belov.ru -d grafana.sergey-belov.ru -d prometheus.sergey-belov.ru -d alertmanager.sergey-belov.ru -d gitlab.sergey-belov.ru -m syarhei.belov@gmail.com --nginx --agree-tos
+#    - name: Requesting SSL certificates
+#      command: certbot -d www.sergey-belov.ru -d grafana.sergey-belov.ru -d prometheus.sergey-belov.ru -d alertmanager.sergey-belov.ru -d gitlab.sergey-belov.ru -m syarhei.belov@gmail.com --nginx --agree-tos
 
     - name: Requesting an SSL certificate for www.sergey-belov.ru
       command: certbot -d www.sergey-belov.ru -m syarhei.belov@gmail.com --nginx --agree-tos --test-cert
