@@ -1,0 +1,42 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - 'alert.rules'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    scrape_interval: 10s
+    static_configs:
+      - targets: [ 'localhost:9090' ]
+
+  - job_name: 'main node'
+    scrape_interval: 10s
+    static_configs:
+      - targets: [ '192.168.2.7:9100' ]
+
+  - job_name: 'gitlab'
+    scrape_interval: 10s
+    static_configs:
+      - targets: [ '192.168.2.10:9100' ]
+
+  - job_name: 'monitoring'
+    scrape_interval: 10s
+    static_configs:
+      - targets: [ '192.168.2.23:9100' ]
+
+  - job_name: 'wordpress'
+    scrape_interval: 10s
+    static_configs:
+      - targets: [ '192.168.2.17:9100' ]
+
+  - job_name: 'db01'
+    scrape_interval: 10s
+    static_configs:
+      - targets: [ '192.168.2.9:9100' ]
+
+  - job_name: 'db02'
+    scrape_interval: 10s
+    static_configs:
+      - targets: [ '192.168.2.32:9100' ]

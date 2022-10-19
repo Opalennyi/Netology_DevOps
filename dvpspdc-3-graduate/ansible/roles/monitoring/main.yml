@@ -1,0 +1,38 @@
+- hosts: monitoring
+  become: yes
+  become_user: root
+  remote_user: ubuntu
+  environment:
+    LANGUAGE: en_US
+    LC_ALL: en_US.UTF-8
+
+  tasks:
+    - name: Updating apt packages
+      apt:
+        upgrade: no
+        update_cache: yes
+
+    - name: Including a shared Docker task
+      include_role:
+        name: '/Users/sergey.belov/PycharmProjects/Netology_DevOps/dvpspdc-3-graduate/ansible/roles/shared'
+        tasks_from: docker
+
+    - name: Including a shared 'Node exporter' task
+      include_role:
+        name: '/Users/sergey.belov/PycharmProjects/Netology_DevOps/dvpspdc-3-graduate/ansible/roles/shared'
+        tasks_from: node-exporter
+
+    - name: Synchronization
+      copy:
+        src: ./stack/
+        dest: "/opt/stack/"
+        owner: root
+        group: root
+        mode: 0644
+      become: true
+
+    - name: Pulling all images in compose
+      command: docker-compose -f /opt/stack/docker-compose.yaml pull
+
+    - name: Taking all services in compose up
+      command: docker-compose -f /opt/stack/docker-compose.yaml up -d

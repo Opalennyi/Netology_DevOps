@@ -60,7 +60,7 @@ resource "yandex_compute_instance" "main" {
 }
 
 resource "yandex_compute_instance" "db01" {
-  name = "mysql-master"
+  name = "db01"
   zone = "ru-central1-a"
 
   resources {
@@ -85,7 +85,7 @@ resource "yandex_compute_instance" "db01" {
 }
 
 resource "yandex_compute_instance" "db02" {
-  name = "mysql-slave"
+  name = "db02"
   zone = "ru-central1-a"
 
   resources {

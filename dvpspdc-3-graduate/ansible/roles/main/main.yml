@@ -1,0 +1,176 @@
+- hosts: main
+  become: yes
+  become_user: root
+  remote_user: ubuntu
+  environment:
+    LANGUAGE: en_US
+    LC_ALL: en_US.UTF-8
+
+  tasks:
+    - include_vars: ../variables.yml
+
+    - name: Updating installed apt packages
+      apt:
+        upgrade: no
+        update_cache: yes
+
+    - name: Installing nginx
+      ansible.builtin.apt:
+        name:
+          - nginx
+        state: present
+        update_cache: true
+
+    - name: Allowing ufw with Nginx HTTP
+      command: ufw allow 'Nginx HTTP'
+
+    - name: Allowing ufw with OpenSSH
+      command: ufw allow 'OpenSSH'
+
+    - name: Allowing everything and enabling UFW
+      community.general.ufw:
+        state: enabled
+        policy: allow
+
+    - name: Clearing nginx config file
+      command: truncate --size 0 /etc/nginx/sites-enabled/default
+
+    - name: Coping nginx config content
+      copy:
+        dest: /etc/nginx/sites-enabled/default
+        content: |
+          server {
+              listen 80;
+              server_name www.sergey-belov.ru;
+          
+              location / {
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+          
+                proxy_pass http://{{ app_internal_ip_address }};
+                proxy_read_timeout 90;
+          
+                proxy_redirect http://{{ app_internal_ip_address }} http://www.sergey-belov.ru;
+              }
+          }
+          
+          server {
+              listen 80;
+              server_name gitlab.sergey-belov.ru;
+          
+              location / {
+                client_max_body_size 100m;
+                
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+          
+                proxy_pass http://{{ gitlab_internal_ip_address }}:10080;
+                proxy_read_timeout 90;
+          
+                proxy_redirect http://{{ gitlab_internal_ip_address }}:10080 https://gitlab.sergey-belov.ru;
+              }
+          }
+          
+          server {
+              listen 80;
+              server_name grafana.sergey-belov.ru;
+          
+              location / {
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+          
+                proxy_pass http://{{ monitoring_internal_ip_address }}:3000;
+                proxy_read_timeout 90;
+          
+                proxy_redirect http://{{ monitoring_internal_ip_address }}:3000 https://grafana.sergey-belov.ru;
+              }
+          }
+          
+          server {
+              listen 80;
+              server_name prometheus.sergey-belov.ru;
+          
+              location / {
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+          
+                proxy_pass http://{{ monitoring_internal_ip_address }}:9090;
+                proxy_read_timeout 90;
+          
+                proxy_redirect http://{{ monitoring_internal_ip_address }}:9090 https://prometheus.sergey-belov.ru;
+              }
+          }
+          
+          server {
+              listen 80;
+              server_name alertmanager.sergey-belov.ru;
+          
+              location / {
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+          
+                proxy_pass http://{{ monitoring_internal_ip_address }}:9093;
+                proxy_read_timeout 90;
+          
+                proxy_redirect http://{{ monitoring_internal_ip_address }}:9093 https://alertmanager.sergey-belov.ru;
+              }
+          }
+
+    - name: Restarting nginx daemon
+      systemd:
+        name: nginx
+        state: restarted
+        enabled: yes
+
+    - name: Installing snapd
+      apt:
+        name:
+          - snapd
+        state: present
+        update_cache: true
+
+    - name: Installing snap core
+      shell:
+        cmd: sudo snap install core; sudo snap refresh core
+
+    - name: Installing snap certbot
+      command: snap install --classic certbot
+
+# When you're out of requests, we can issue one certificate for all of them
+    - name: Requesting SSL certificates
+      command: certbot -d www.sergey-belov.ru -d grafana.sergey-belov.ru -d prometheus.sergey-belov.ru -d alertmanager.sergey-belov.ru -d gitlab.sergey-belov.ru -m syarhei.belov@gmail.com --nginx --agree-tos
+
+    - name: Requesting an SSL certificate for www.sergey-belov.ru
+      command: certbot -d www.sergey-belov.ru -m syarhei.belov@gmail.com --nginx --agree-tos --test-cert
+
+    - name: Requesting an SSL certificate for grafana.sergey-belov.ru
+      command: certbot -d grafana.sergey-belov.ru -m syarhei.belov@gmail.com --nginx --agree-tos --test-cert
+
+    - name: Requesting an SSL certificate for prometheus.sergey-belov.ru
+      command: certbot -d prometheus.sergey-belov.ru -m syarhei.belov@gmail.com --nginx --agree-tos --test-cert
+
+    - name:  Requesting an SSL certificate for alertmanager.sergey-belov.ru
+      command: certbot -d alertmanager.sergey-belov.ru -m syarhei.belov@gmail.com --nginx --agree-tos --test-cert
+
+    - name: Requesting an SSL certificate for gitlab.sergey-belov.ru
+      command: certbot -d gitlab.sergey-belov.ru -m syarhei.belov@gmail.com --nginx --agree-tos --test-cert
+
+    - name: Including a shared Docker task
+      include_role:
+        name: '/Users/sergey.belov/PycharmProjects/Netology_DevOps/dvpspdc-3-graduate/ansible/roles/shared'
+        tasks_from: docker
+
+    - name: Including a shared 'Node exporter' task
+      include_role:
+        name: '/Users/sergey.belov/PycharmProjects/Netology_DevOps/dvpspdc-3-graduate/ansible/roles/shared'
+        tasks_from: node-exporter

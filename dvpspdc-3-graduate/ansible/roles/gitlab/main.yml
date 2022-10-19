@@ -1,0 +1,56 @@
+- hosts: gitlab
+  become: yes
+  become_user: root
+  remote_user: ubuntu
+  environment:
+    LANGUAGE: en_US
+    LC_ALL: en_US.UTF-8
+
+  tasks:
+    - name: Updating installed apt packages
+      apt:
+        upgrade: no
+        update_cache: yes
+
+    - name: Including a shared Docker task
+      include_role:
+        name: '/Users/sergey.belov/PycharmProjects/Netology_DevOps/dvpspdc-3-graduate/ansible/roles/shared'
+        tasks_from: docker
+
+    - name: wget'ing gitlab/master/docker-compose.yml
+      command: wget https://raw.githubusercontent.com/sameersbn/docker-gitlab/master/docker-compose.yml -P /opt/stack/gitlab
+
+    - name: Taking up all services in Docker Compose
+      command: docker-compose -f /opt/stack/gitlab/docker-compose.yml up -d
+
+- hosts: runner
+  become: yes
+  become_user: root
+  remote_user: ubuntu
+  environment:
+    LANGUAGE: en_US
+    LC_ALL: en_US.UTF-8
+
+  tasks:
+    - name: Updating installed apt packages
+      apt:
+        upgrade: no
+        update_cache: yes
+
+    - name: Including a shared Docker task
+      include_role:
+        name: '/Users/sergey.belov/PycharmProjects/Netology_DevOps/dvpspdc-3-graduate/ansible/roles/shared'
+        tasks_from: docker
+
+    - name: Downloading gitlab-runner
+      shell:
+        cmd: curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh | sudo bash
+
+    - name: Installing gitlab-runner
+      command: apt-get install gitlab-runner
+
+    - name: Installing apt-transport-https and ca-certificates
+      command: sudo apt-get install apt-transport-https ca-certificates -y
+
+    - name: Updating certificates index
+      command: sudo update-ca-certificates
