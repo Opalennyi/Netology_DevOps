@@ -451,7 +451,18 @@ runner.sergey-belov.ru     : ok=11   changed=6    unreachable=0    failed=0    s
 
 ![gitlab-6](images/gitlab-6.png)
 
-Прежде всего, в Ansible-файле `main/mail.yml` уберем флаги `--test-cert` и выпустим реальные сертификаты. Залогинимся на машину `runner` и создадим новый `gitlab-runner`:
+Прежде всего, в Ansible-файле `main/mail.yml` уберем флаги `--test-cert` и выпустим реальные сертификаты. Залогинимся на машину `runner` и создадим новый `gitlab-runner`.
+
+![main-cert](images/main-cert.png)
+
+![grafana-cert](images/grafana-cert.png)
+
+![prometheus-cert](images/prometheus-cert.png)
+
+![alertmanager-cert](images/alertmanager-cert.png)
+
+![gitlab-cert](images/gitlab-cert.png)
+
 ```shell
 sergey.belov@Try-Goose-Grass-MacBook-Pro ~ % ssh runner.sergey-belov.ru
 Enter passphrase for key '/Users/sergey.belov/.ssh/id_rsa':
