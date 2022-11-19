@@ -2,6 +2,21 @@
 
 ## Дипломный практикум в YandexCloud
 
+---
+### UPD. от 19 ноября 2022 года специально для Олега Букатчука, который не верит, что мои сертификаты были выпущены для работающих сервисов
+
+![for_bukatchuk_main](images/for_bukatchuk_main.png)
+
+![for_bukatchuk_gitlab](images/for_bukatchuk_gitlab.png)
+
+![for_bukatchuk_alertmanager](images/for_bukatchuk_alertmanager.png)
+
+![for_bukatchuk_prometheus](images/for_bukatchuk_prometheus.png)
+
+![for_bukatchuk_grafana](images/for_bukatchuk_grafana.png)
+
+---
+
 ### 1. Регистрация доменного имени
 
 Зарегистрируем домен `sergey-belov.ru` на reg.ru. При покупке добавим дополнительную бесплатную услугу DomainSSL.
